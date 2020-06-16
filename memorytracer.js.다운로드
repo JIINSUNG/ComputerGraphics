@@ -1,0 +1,253 @@
+"use strict";
+
+var canvas;
+var gl;
+
+var numVertices  = 36;
+
+var texSize = 64;
+
+var program;
+
+var pointsArray = [];
+var colorsArray = [];
+var texCoordsArray = [];
+
+var texture;
+
+var i = -1; // 배열의 인덱스를 가르키는 변수
+
+
+var texCoord = [
+    vec2(0, 0),
+    vec2(0, 1),
+    vec2(1, 1),
+    vec2(1, 0)
+];
+
+var vertices = 
+[
+    vec4( -0.5, -0.5,  0.5, 1.0 ),
+    vec4( -0.5,  0.5,  0.5, 1.0 ),
+    vec4( 0.5,  0.5,  0.5, 1.0 ),
+    vec4( 0.5, -0.5,  0.5, 1.0 ),
+    vec4( -0.5, -0.5, -0.5, 1.0 ),
+    vec4( -0.5,  0.5, -0.5, 1.0 ),
+    vec4( 0.5,  0.5, -0.5, 1.0 ),
+    vec4( 0.5, -0.5, -0.5, 1.0 )
+];
+
+var vertexColors = 
+[    
+   // 사진들을 잘 볼수있게 흰색으로
+    vec4( 1.0, 1.0, 1.0, 1.0 ),  // white  
+    vec4( 1.0, 1.0, 1.0, 1.0 ),  // white
+    vec4( 1.0, 1.0, 1.0, 1.0 ),  // white
+    vec4( 1.0, 1.0, 1.0, 1.0 ),  // white
+    vec4( 1.0, 1.0, 1.0, 1.0 ),  // white
+    vec4( 1.0, 1.0, 1.0, 1.0 ),  // white
+    vec4( 1.0, 1.0, 1.0, 1.0 ),  // white
+    vec4( 1.0, 1.0, 1.0, 1.0 )  // white
+
+];
+
+var init = 0;  // 초기화 상태는 0 
+var past = 1;  // 과거로 상태는 1
+var present = 2; // 현재로 상태는 2
+var state = init; // 기본 상태는 0 
+
+var theta = [45.0, 45.0, 45.0];
+
+var thetaLoc;
+
+function configureTexture( image ) 
+{
+
+  
+   texture = gl.createTexture();
+    gl.bindTexture( gl.TEXTURE_2D, texture );
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); // true면 사진 y축 반전 false면 그대로 
+    gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image );
+    gl.generateMipmap( gl.TEXTURE_2D );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER,  gl.NEAREST_MIPMAP_LINEAR );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST );
+        gl.uniform1i(gl.getUniformLocation(program, "texture"), 0);
+
+}
+
+
+function quad(a, b, c, d) {
+
+     pointsArray.push(vertices[a]);
+     colorsArray.push(vertexColors[a]);
+     texCoordsArray.push(texCoord[0]);
+
+     pointsArray.push(vertices[c]);
+     colorsArray.push(vertexColors[a]);
+     texCoordsArray.push(texCoord[2]);
+
+     pointsArray.push(vertices[d]);
+     colorsArray.push(vertexColors[a]);
+     texCoordsArray.push(texCoord[3]);
+     
+     pointsArray.push(vertices[a]);
+     colorsArray.push(vertexColors[a]);
+     texCoordsArray.push(texCoord[0]);
+
+     pointsArray.push(vertices[b]);
+     colorsArray.push(vertexColors[a]);
+     texCoordsArray.push(texCoord[1]);
+
+     pointsArray.push(vertices[c]);
+     colorsArray.push(vertexColors[a]);
+     texCoordsArray.push(texCoord[2]);
+
+
+}
+
+
+function colorCube()
+{
+    quad( 1, 0, 3, 2 );
+    quad( 2, 3, 7, 6 );
+    quad( 3, 0, 4, 7 );
+    quad( 6, 5, 1, 2 );
+    quad( 5, 4 , 7, 6 );
+    quad( 5, 4, 0, 1 );
+}
+
+
+window.onload = function init() 
+{
+
+    canvas = document.getElementById( "gl-canvas" );
+
+    gl = WebGLUtils.setupWebGL( canvas );
+    if ( !gl ) { alert( "WebGL isn't available" ); }
+
+    gl.viewport( 0, 0, canvas.width, canvas.height );
+    gl.clearColor( 1.0, 1.0, 1.0, 1.0 );
+
+    gl.enable(gl.DEPTH_TEST);
+
+    //
+    //  Load shaders and initialize attribute buffers
+    //
+    program = initShaders( gl, "vertex-shader", "fragment-shader" );
+    gl.useProgram( program );
+
+    colorCube();
+
+    var cBuffer = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, cBuffer );
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(colorsArray), gl.STATIC_DRAW );
+
+    var vColor = gl.getAttribLocation( program, "vColor" );
+    gl.vertexAttribPointer( vColor, 4, gl.FLOAT, false, 0, 0 );
+    gl.enableVertexAttribArray( vColor );
+
+    var vBuffer = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(pointsArray), gl.STATIC_DRAW );
+
+    var vPosition = gl.getAttribLocation( program, "vPosition" );
+    gl.vertexAttribPointer( vPosition, 4, gl.FLOAT, false, 0, 0 );
+    gl.enableVertexAttribArray( vPosition );
+
+    var tBuffer = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, tBuffer );
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(texCoordsArray), gl.STATIC_DRAW );
+
+    var vTexCoord = gl.getAttribLocation( program, "vTexCoord" );
+    gl.vertexAttribPointer( vTexCoord, 2, gl.FLOAT, false, 0, 0 );
+    gl.enableVertexAttribArray( vTexCoord );
+
+    //
+    // Initialize a texture
+    //
+
+    //var image = new Image();
+    //image.onload = function() {
+     //   configureTexture( image );
+    //}
+    //image.src = "SA2011_black.gif"
+
+
+function goto_past()
+{
+   if(state == past) // 만약 상태가 과거로가 맞으면
+   {
+   var image = document.getElementById(imagearray[i--]); // 이미지태그배열의 i인덱스를 이미지에 넣고
+    configureTexture( image ); // 이미지 텍스쳐를 입힘, 인덱스i는 후위감소
+    }
+    
+    if(i == -1) // 만약 후위감소된 인덱스 i가 음수라면 더이상 가르키는 이미지 태그가 없음으로 더이상 호출 X
+    ;
+    
+    else if (state == past) // 만약 음수가아니라면 가르킬 인덱스가 있음으로 상태가 과거로가 맞다면
+    setTimeout(goto_past,4000); // goto_past함수를 재귀적호출로 다시 불러냄 호출 직후 상태가 바뀌더라도 위 if조건에 의해 걸러짐
+}
+
+
+function goto_present()
+{
+
+   if(state == present) // 만약 상태가 현재로라면
+   {
+   
+   var image = document.getElementById(imagearray[i++]); //이미지태그배열의 i인덱스를 이미지에 넣고
+    configureTexture( image ); //이미지 텍스쳐를 입힘 인덱스i는 후위증가
+    }
+    
+    if(i == imagearray.length) // 만약 후위감소된 i가 이미지어레이 배열의 길이와 맞다면 더이상 가르킬 이미지 태그가 없으므로 호출 X 
+        ;
+
+    
+    else if(state == present) // 만약 위 조건이 아니라면 가르킬 인덱스가 있음으로 상태가 현재로인지를 체크하고
+    setTimeout(goto_present,4000); // 맞다면 goto_present 재귀호출로 다시 불러냄 호출 직후 상태가 바뀌더라도 위 if 조건에 의해 걸러짐  
+}
+
+function initialization() // 초기화 함수
+{
+   var image = document.getElementById(imagearray[-1]); // 이미지태그배열의 -1 인덱스를 이미지에 넣음 -1 인덱스는 존재하지않음으로
+   configureTexture(image); // 검은 텍스쳐만 나오게 됨 
+
+}
+
+ //var image = document.getElementById("texImage");
+ //configureTexture( image );
+
+
+
+    
+
+    thetaLoc = gl.getUniformLocation(program, "theta");
+
+    document.getElementById("past").onclick = function(){state = past; i = imagearray.length-1; goto_past();}; 
+    //과거로 버튼을 누르면 상태를 과거로 상태로 바꿔주고 인덱스를 나타내는 i를 배열의길이 -1 즉, 마지막 인덱스 값을 넣어주고 goto_past 메소드를 호출함 
+    document.getElementById("present").onclick = function(){state = present; i = 0; goto_present();};
+    //현재로 버튼을 누르면 상태를 현재로 상태로 바꿔주고 인덱스를 나타내는 i를 처음 이미지를 가르키는 0 값을 넣어주고 goto_present 메소드를 호출함
+    document.getElementById("initialization").onclick = function(){state = init;  initialization();};
+    //초기화 버튼을 누르면 상태를 init 즉 초기화 상태로 바꿔주고  초기화 메소드를 호출함 
+
+
+    render();
+
+}
+
+var render = function(){
+    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    
+    if(state == past) // 상태가 과거로 라면 육면체가 오른쪽으로 회전 
+    theta[1] += 1.0;
+    
+    if(state == present) // 상태가 현재로 라면 육면체가 왼쪽으로 회전
+    theta[1] -=1.0;
+    
+    if(state == init) // 상태가 초기화 상태라면 회전하지않음 
+    ;
+    
+    gl.uniform3fv(thetaLoc, flatten(theta));
+    gl.drawArrays( gl.TRIANGLES, 0, numVertices );
+    requestAnimFrame(render);
+}
