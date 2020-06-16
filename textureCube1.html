@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<!-- saved from url=(0106)https://www.cs.unm.edu/~angel/BOOK/INTERACTIVE_COMPUTER_GRAPHICS/SEVENTH_EDITION/CODE/07/textureCube1.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252"><style type="text/css">
+    canvas { background: blue; }
+</style>
+
+</head><body>
+<button id="past"> 과거로 </button>
+<button id="present"> 현재로 </button>
+<button id="initialization"> 초기화 </button>
+
+
+
+
+
+<script id="vertex-shader" type="x-shader/x-vertex">
+
+attribute  vec4 vPosition;
+attribute  vec4 vColor;
+attribute  vec2 vTexCoord;
+
+varying vec4 fColor;
+varying vec2 fTexCoord;
+
+uniform vec3 theta;
+
+void main()
+{
+    // Compute the sines and cosines of theta for each of
+    //   the three axes in one computation.
+    vec3 angles = radians( theta );
+    vec3 c = cos( angles );
+    vec3 s = sin( angles );
+
+
+
+    mat4 ry = mat4( c.y, 0.0, -s.y, 0.0,
+		    0.0, 1.0,  0.0, 0.0,
+		    s.y, 0.0,  c.y, 0.0,
+		    0.0, 0.0,  0.0, 1.0 );
+
+
+    fColor = vColor;
+    fTexCoord = vTexCoord;
+    gl_Position = ry * vPosition; // rx * rz
+    gl_Position.z = -gl_Position.z;
+}
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+
+precision mediump float;
+
+varying vec4 fColor;
+varying vec2 fTexCoord;
+
+uniform sampler2D texture;
+
+void main()
+{
+    gl_FragColor = fColor * texture2D( texture, fTexCoord );
+}
+</script>
+
+<script type="text/javascript" src="./textureCube1_files/webgl-utils.js.&#45796;&#50868;&#47196;&#46300;"></script>
+<script type="text/javascript" src="./textureCube1_files/initShaders.js.&#45796;&#50868;&#47196;&#46300;"></script>
+<script type="text/javascript" src="./textureCube1_files/MV.js.&#45796;&#50868;&#47196;&#46300;"></script>
+<script type="text/javascript" src="./textureCube1_files/textureCube1.js.&#45796;&#50868;&#47196;&#46300;"></script>
+
+
+
+<canvas id="gl-canvas" width="512" height="512">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+<img id="Image1" src="./textureCube1_files/1.jpg" hidden="">
+    <img id="Image2" src="./textureCube1_files/2.jpg" hidden="">
+        <img id="Image3" src="./textureCube1_files/3.jpg" hidden="">
+            <img id="Image4" src="./textureCube1_files/4.jpg" hidden="">
+              <img id="Image5" src="./textureCube1_files/5.jpg" hidden="">
+                <img id="Image6" src="./textureCube1_files/6.jpg" hidden="">
+                  <img id="Image7" src="./textureCube1_files/7.jpg" hidden="">
+                    <img id="Image8" src="./textureCube1_files/8.jpg" hidden="">
+                      <img id="Image9" src="./textureCube1_files/9.jpg" hidden="">
+
+
+
+<script> var imagearray = ["Image1" , "Image2", "Image3", "Image4", "Image5", "Image6", "Image7", "Image8", "Image9"]; </script>
+
+</body></html>
